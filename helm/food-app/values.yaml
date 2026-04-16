@@ -1,0 +1,37 @@
+namespace: food
+
+backend:
+  name: recipe-backend
+  image: recipe-backend
+  tag: v1
+  imagePullPolicy: IfNotPresent
+  replicas: 1
+  port: 8080
+  env:
+    databaseUrl: "mongodb://mongodb-service:27017/"
+    databaseName: "ead_ca2"
+    databaseCollection: "ead_2024"
+  service:
+    type: ClusterIP
+    port: 8080
+
+frontend:
+  name: recipe-frontend
+  image: recipe-frontend
+  tag: v1
+  imagePullPolicy: IfNotPresent
+  replicas: 1
+  port: 22137
+  service:
+    type: LoadBalancer
+    port: 22137
+
+mongodb:
+  name: mongodb
+  image: mongo
+  tag: latest
+  replicas: 1
+  port: 27017
+  service:
+    name: mongodb-service
+    port: 27017

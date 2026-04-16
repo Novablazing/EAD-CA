@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.backend.name }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.backend.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.backend.name }}
+    spec:
+      containers:
+      - name: {{ .Values.backend.name }}
+        image: {{ .Values.backend.image }}:{{ .Values.backend.tag }}
+        imagePullPolicy: {{ .Values.backend.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.backend.port }}
+        env:
+        - name: DATABASE_URL
+          value: {{ .Values.backend.env.databaseUrl | quote }}
+        - name: DATABASE_NAME
+          value: {{ .Values.backend.env.databaseName | quote }}
+        - name: DATABASE_COLLECTION
+          value: {{ .Values.backend.env.databaseCollection | quote }}
