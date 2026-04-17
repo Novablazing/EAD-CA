@@ -1,0 +1,63 @@
+#cloud-config
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - curl
+  - wget
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+
+write_files:
+  - path: /etc/k3s-install.env
+    content: |
+      INSTALL_K3S_EXEC="server"
+      K3S_KUBECONFIG_MODE="644"
+    permissions: "0644"
+
+runcmd:
+  # Disable swap (required for k3s)
+  - swapoff -a
+  - sed -i '/ swap / s/^/#/' /etc/fstab
+
+  # Load required kernel modules
+  - modprobe overlay
+  - modprobe br_netfilter
+
+  # Apply sysctl settings for k3s networking
+  - |
+    cat > /etc/sysctl.d/99-k3s.conf <<EOF
+    net.bridge.bridge-nf-call-iptables  = 1
+    net.bridge.bridge-nf-call-ip6tables = 1
+    net.ipv4.ip_forward                 = 1
+    EOF
+  - sysctl --system
+
+  # Install k3s server
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" K3S_KUBECONFIG_MODE="644" sh -
+
+  # Enable and start k3s service
+  - systemctl enable k3s
+  - systemctl start k3s
+
+  # Wait for k3s to be ready
+  - |
+    until kubectl get nodes 2>/dev/null | grep -q " Ready"; do
+      echo "Waiting for k3s to be ready..."
+      sleep 5
+    done
+    echo "k3s is ready."
+
+  # Save kubeconfig to default location for azureuser
+  - mkdir -p /home/azureuser/.kube
+  - cp /etc/rancher/k3s/k3s.yaml /home/azureuser/.kube/config
+  - chown -R azureuser:azureuser /home/azureuser/.kube
+  - chmod 600 /home/azureuser/.kube/config
+
+  # Add KUBECONFIG to azureuser profile
+  - echo 'export KUBECONFIG=$HOME/.kube/config' >> /home/azureuser/.bashrc
+
+final_message: "k3s installation complete. Node is ready after $UPTIME seconds."
