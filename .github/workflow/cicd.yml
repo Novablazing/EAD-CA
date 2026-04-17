@@ -1,0 +1,26 @@
+name: Kubernetes Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - dev
+      - qa
+    paths-ignore:
+      - '.github/workflows/**'
+
+jobs:
+  BP-application-CI:
+  
+    runs-on: self-hosted
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+
+        - name: Log in to GitHub Container Registry
+          uses: docker/login-action@v3
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GHCR_TOKEN }}
