@@ -1,8 +1,14 @@
 name: Build and Deploy
 
 on:
+  workflow_dispatch:
   push:
-    branches: [dev, qa, main]
+    branches:
+      - main
+      - dev
+      - qa
+    paths-ignore:
+      - '.github/workflows/**'
 
 jobs:
   build-push:
