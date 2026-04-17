@@ -55,7 +55,7 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/food-frontend:${{ steps.vars.outputs.tag }}
 
       - name: Run Trivy vulnerability scanner (backend)
-        uses: aquasecurity/trivy-action@v0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: 'ghcr.io/${{ github.repository_owner }}/food-backend:${{ steps.vars.outputs.tag }}'
           format: 'table'
@@ -65,7 +65,7 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
       - name: Run Trivy vulnerability scanner (frontend)
-        uses: aquasecurity/trivy-action@v0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: 'ghcr.io/${{ github.repository_owner }}/food-frontend:${{ steps.vars.outputs.tag }}'
           format: 'table'
