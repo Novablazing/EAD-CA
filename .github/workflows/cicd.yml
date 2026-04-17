@@ -30,8 +30,8 @@ jobs:
 
         - name: Docker Image Build and Push
           run: |
-            docker build -t ${{ env.REPOSITORY }}/backend:v1 /app/Backend
-            docker build -t ${{ env.REPOSITORY }}/frontend:v1 /app/Frontend
+            docker build -t ${{ env.REPOSITORY }}/backend:v1 ./app/Backend
+            docker build -t ${{ env.REPOSITORY }}/frontend:v1 ./app/Frontend
             docker push ${{ env.REPOSITORY }}/backend:v1
             docker push ${{ env.REPOSITORY }}/frontend:v1
             docker images
