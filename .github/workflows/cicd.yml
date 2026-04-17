@@ -14,7 +14,7 @@ env:
   REPOSITORY: ghcr.io/novablazing
 
 jobs:
-  Application_Deployment:
+  Application_Deployment_CI:
   
     runs-on: self-hosted
     steps:
@@ -35,5 +35,6 @@ jobs:
             docker push ${{ env.REPOSITORY }}/backend:v1
             docker push ${{ env.REPOSITORY }}/frontend:v1
             docker images
+
 
         
