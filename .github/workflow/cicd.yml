@@ -10,6 +10,9 @@ on:
     paths-ignore:
       - '.github/workflows/**'
 
+env:
+  REPOSITORY: ghcr.io/novablazing
+
 jobs:
   Application Deployment:
   
@@ -24,3 +27,13 @@ jobs:
             registry: ghcr.io
             username: ${{ github.actor }}
             password: ${{ secrets.GHCR_TOKEN }}
+
+        - name: Docker Image Build and Push
+          run: |
+            docker build -t ${{ env.REPOSITORY }}/Backend:v1 /app/Backend
+            docker build -t ${{ env.REPOSITORY }}/Frontend:v1 /app/Frontend
+            docker push ${{ env.REPOSITORY }}/Backend:v1
+            docker push ${{ env.REPOSITORY }}/Frontend:v1
+            docker images
+
+        
