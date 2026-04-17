@@ -11,7 +11,7 @@ on:
       - '.github/workflows/**'
 
 jobs:
-  BP-application-CI:
+  Application Deployment:
   
     runs-on: self-hosted
     steps:
