@@ -1,0 +1,20 @@
+namespace: food-qa
+
+backend:
+  image: ghcr.io/OWNER/food-backend
+  tag: qa
+  imagePullPolicy: Always
+  replicas: 2
+  env:
+    databaseUrl: "mongodb://mongodb-service:27017/"
+    databaseName: "ead_qa"
+    databaseCollection: "ead_qa_2024"
+
+frontend:
+  image: ghcr.io/OWNER/food-frontend
+  tag: qa
+  imagePullPolicy: Always
+  replicas: 2
+
+mongodb:
+  replicas: 1

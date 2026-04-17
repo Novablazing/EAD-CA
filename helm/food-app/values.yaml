@@ -2,7 +2,7 @@ namespace: food
 
 backend:
   name: recipe-backend
-  image: recipe-backend
+  image: backend
   tag: v1
   imagePullPolicy: IfNotPresent
   replicas: 1
@@ -17,7 +17,7 @@ backend:
 
 frontend:
   name: recipe-frontend
-  image: recipe-frontend
+  image: frontend
   tag: v1
   imagePullPolicy: IfNotPresent
   replicas: 1

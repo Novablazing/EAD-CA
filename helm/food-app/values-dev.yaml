@@ -1,0 +1,20 @@
+namespace: food-dev
+
+backend:
+  image: ghcr.io/novablazing/food-backend
+  tag: dev
+  imagePullPolicy: Always
+  replicas: 1
+  env:
+    databaseUrl: "mongodb://mongodb-service:27017/"
+    databaseName: "ead_dev"
+    databaseCollection: "ead_dev_2024"
+
+frontend:
+  image: ghcr.io/novablazing/food-frontend
+  tag: dev
+  imagePullPolicy: Always
+  replicas: 1
+
+mongodb:
+  replicas: 1
