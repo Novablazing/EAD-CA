@@ -45,19 +45,19 @@ jobs:
         with:
           context: ./app/Backend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/food-backend:${{ steps.vars.outputs.tag }}
+          tags: ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}
 
       - name: Build & push frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./app/Frontend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/food-frontend:${{ steps.vars.outputs.tag }}
+          tags: ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}
 
       - name: Run Trivy vulnerability scanner (backend)
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: 'ghcr.io/${{ github.repository_owner }}/food-backend:${{ steps.vars.outputs.tag }}'
+          image-ref: 'ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}'
           format: 'table'
           output: 'trivy-backend-report.txt'
           ignore-unfixed: true
@@ -67,7 +67,7 @@ jobs:
       - name: Run Trivy vulnerability scanner (frontend)
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: 'ghcr.io/${{ github.repository_owner }}/food-frontend:${{ steps.vars.outputs.tag }}'
+          image-ref: 'ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}'
           format: 'table'
           output: 'trivy-frontend-report.txt'
           ignore-unfixed: true
