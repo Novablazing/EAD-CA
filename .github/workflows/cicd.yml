@@ -14,7 +14,7 @@ env:
   REPOSITORY: ghcr.io/novablazing
 
 jobs:
-  Application Deployment:
+  Application_Deployment:
   
     runs-on: self-hosted
     steps:
