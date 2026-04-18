@@ -58,7 +58,7 @@ variable "tags" {
 variable "kubeconfig_local_path" {
   description = "Local directory where per-environment kubeconfig files are saved after provisioning (e.g. kubeconfig-dev)"
   type        = string
-  default     = "/home/vyshnav/myworkspace"
+  default     = "/home/vyshnav/kubeconfigenv"
 }
 
 # ---------------------------------------------------------------------------

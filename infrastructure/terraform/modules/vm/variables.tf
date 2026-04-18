@@ -99,5 +99,5 @@ variable "tags" {
 variable "kubeconfig_local_path" {
   description = "Local directory where the k3s kubeconfig is saved after provisioning (file: kubeconfig-<environment>)"
   type        = string
-  default     = "/home/vyshnav/myworkspace"
+  default     = "/home/vyshnav/kubeconfigenv"
 }
