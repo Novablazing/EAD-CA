@@ -1,7 +1,11 @@
 namespace: food-qa
 
+imagePullSecret:
+  username: ""
+  password: ""
+
 backend:
-  image: ghcr.io/OWNER/food-backend
+  image: ghcr.io/novablazing/food-backend
   tag: qa
   imagePullPolicy: Always
   replicas: 2
@@ -11,7 +15,7 @@ backend:
     databaseCollection: "ead_qa_2024"
 
 frontend:
-  image: ghcr.io/OWNER/food-frontend
+  image: ghcr.io/novablazing/food-frontend
   tag: qa
   imagePullPolicy: Always
   replicas: 2
