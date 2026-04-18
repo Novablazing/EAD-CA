@@ -92,7 +92,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infrastructure/terraform
-        run: terraform plan -var-file=dev.tfvars -out=tfplan-dev
+        run: terraform plan -var-file=dev.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-dev
 
       - name: Terraform Apply
         working-directory: infrastructure/terraform
