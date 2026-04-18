@@ -114,7 +114,6 @@ jobs:
             --set frontend.tag=dev \
             --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
             --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
-            --wait --timeout 5m
 
       - name: Verify rollout
         env:
