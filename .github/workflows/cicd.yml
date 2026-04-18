@@ -19,11 +19,11 @@ jobs:
   #     packages: write
   #   outputs:
   #     image_tag: ${{ steps.vars.outputs.tag }}
-
+  #
   #   steps:
   #     - name: Checkout code
   #       uses: actions/checkout@v4
-
+  #
   #     - name: Resolve image tag from branch
   #       id: vars
   #       run: |
@@ -32,28 +32,28 @@ jobs:
   #           qa)   echo "tag=qa"  >> $GITHUB_OUTPUT ;;
   #           *)    echo "tag=dev" >> $GITHUB_OUTPUT ;;
   #         esac
-
+  #
   #     - name: Log in to GitHub Container Registry
   #       uses: docker/login-action@v3
   #       with:
   #         registry: ghcr.io
   #         username: ${{ github.actor }}
   #         password: ${{ secrets.GITHUB_TOKEN }}
-
+  #
   #     - name: Build & push backend image
   #       uses: docker/build-push-action@v5
   #       with:
   #         context: ./app/Backend
   #         push: true
   #         tags: ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}
-
+  #
   #     - name: Build & push frontend image
   #       uses: docker/build-push-action@v5
   #       with:
   #         context: ./app/Frontend
   #         push: true
   #         tags: ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}
-
+  #
   #     - name: Run Trivy vulnerability scanner (backend)
   #       uses: aquasecurity/trivy-action@0.35.0
   #       with:
@@ -63,7 +63,7 @@ jobs:
   #         ignore-unfixed: true
   #         vuln-type: 'os,library'
   #         severity: 'CRITICAL,HIGH,MEDIUM,LOW'
-
+  #
   #     - name: Run Trivy vulnerability scanner (frontend)
   #       uses: aquasecurity/trivy-action@0.35.0
   #       with:
@@ -74,10 +74,9 @@ jobs:
   #         vuln-type: 'os,library'
   #         severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
-
   deploy-dev:
     name: Deploy → Dev
-    needs: build-push
+    # needs: build-push
     if: github.ref_name == 'dev'
     runs-on: self-hosted   # use self-hosted runner with Terraform, kubectl, Helm installed
     environment: dev        # configure protection rules in GitHub repo Settings
@@ -110,9 +109,9 @@ jobs:
             -f ./helm/food-app/values-dev.yaml \
             --kubeconfig /home/vyshnav/kubeconfigenv/kubeconfig-dev \
             --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
-            --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
+            --set backend.tag=dev \
             --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
-            --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
+            --set frontend.tag=dev \
             --wait --timeout 5m
 
       - name: Verify rollout
@@ -150,9 +149,9 @@ jobs:
   #         helm upgrade --install food-app-qa ./helm/food-app \
   #           -f ./helm/food-app/values-qa.yaml \
   #           --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
-  #           --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
+  #           --set backend.tag=dev \
   #           --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
-  #           --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
+  #           --set frontend.tag=dev \
   #           --wait --timeout 5m
 
   #     - name: Verify rollout
@@ -190,9 +189,9 @@ jobs:
   #         helm upgrade --install food-app-prod ./helm/food-app \
   #           -f ./helm/food-app/values-prod.yaml \
   #           --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
-  #           --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
+  #           --set backend.tag=dev \
   #           --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
-  #           --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
+  #           --set frontend.tag=dev \
   #           --wait --timeout 5m
 
   #     - name: Verify rollout
