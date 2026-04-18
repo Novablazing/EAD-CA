@@ -108,6 +108,11 @@ jobs:
           KUBECONFIG: /home/vyshnav/kubeconfigenv/kubeconfig-dev
         run: |
           kubectl create namespace food-dev --dry-run=client -o yaml | kubectl apply -f -
+          kubectl label namespace food-dev app.kubernetes.io/managed-by=Helm --overwrite
+          kubectl annotate namespace food-dev \
+            meta.helm.sh/release-name=food-app-dev \
+            meta.helm.sh/release-namespace=default \
+            --overwrite
           kubectl create secret docker-registry ghcr-secret \
             --namespace food-dev \
             --docker-server=ghcr.io \

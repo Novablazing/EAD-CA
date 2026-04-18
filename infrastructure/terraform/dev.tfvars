@@ -1,6 +1,6 @@
 resource_group_name = "EADCA2"
 location            = "francecentral"
-vm_size             = "Standard_B1s"
+vm_size             = "Standard_B2ats_v2"
 admin_username      = "azureuser"
 os_disk_size_gb     = 30
 vnet_address_space  = "10.0.0.0/16"
