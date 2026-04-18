@@ -2,81 +2,81 @@ name: Automation Build and Deploy
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
-  #     - dev
-  #     - qa
+  push:
+    branches:
+      - main
+      - dev
+      - qa
     paths-ignore:
       - '.github/workflows/**'
 
 jobs:
-  # build-push:
-  #   name: Build & Push Docker Images
-  #   runs-on: ubuntu-22.04
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   outputs:
-  #     image_tag: ${{ steps.vars.outputs.tag }}
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Resolve image tag from branch
-  #       id: vars
-  #       run: |
-  #         case "${{ github.ref_name }}" in
-  #           main) echo "tag=v1"  >> $GITHUB_OUTPUT ;;
-  #           qa)   echo "tag=qa"  >> $GITHUB_OUTPUT ;;
-  #           *)    echo "tag=dev" >> $GITHUB_OUTPUT ;;
-  #         esac
-  #
-  #     - name: Log in to GitHub Container Registry
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #
-  #     - name: Build & push backend image
-  #       uses: docker/build-push-action@v5
-  #       with:
-  #         context: ./app/Backend
-  #         push: true
-  #         tags: ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}
-  #
-  #     - name: Build & push frontend image
-  #       uses: docker/build-push-action@v5
-  #       with:
-  #         context: ./app/Frontend
-  #         push: true
-  #         tags: ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}
-  #
-  #     - name: Run Trivy vulnerability scanner (backend)
-  #       uses: aquasecurity/trivy-action@0.35.0
-  #       with:
-  #         image-ref: 'ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}'
-  #         format: 'table'
-  #         output: 'trivy-backend-report.txt'
-  #         ignore-unfixed: true
-  #         vuln-type: 'os,library'
-  #         severity: 'CRITICAL,HIGH,MEDIUM,LOW'
-  #
-  #     - name: Run Trivy vulnerability scanner (frontend)
-  #       uses: aquasecurity/trivy-action@0.35.0
-  #       with:
-  #         image-ref: 'ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}'
-  #         format: 'table'
-  #         output: 'trivy-frontend-report.txt'
-  #         ignore-unfixed: true
-  #         vuln-type: 'os,library'
-  #         severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+  build-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.vars.outputs.tag }}
+  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Resolve image tag from branch
+        id: vars
+        run: |
+          case "${{ github.ref_name }}" in
+            main) echo "tag=v1"  >> $GITHUB_OUTPUT ;;
+            qa)   echo "tag=qa"  >> $GITHUB_OUTPUT ;;
+            *)    echo "tag=dev" >> $GITHUB_OUTPUT ;;
+          esac
+  
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+  
+      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/Backend
+          push: true
+          tags: ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}
+  
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/Frontend
+          push: true
+          tags: ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}
+  
+      - name: Run Trivy vulnerability scanner (backend)
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: 'ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}'
+          format: 'table'
+          output: 'trivy-backend-report.txt'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+  
+      - name: Run Trivy vulnerability scanner (frontend)
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: 'ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}'
+          format: 'table'
+          output: 'trivy-frontend-report.txt'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
   deploy-dev:
     name: Deploy → Dev
-    # needs: build-push
+    needs: build-push
     if: github.ref_name == 'dev'
     runs-on: self-hosted   # use self-hosted runner with Terraform, kubectl, Helm installed
     environment: dev        # configure protection rules in GitHub repo Settings
@@ -127,7 +127,7 @@ jobs:
   # ──────────────────────────────────────────────
   deploy-qa:
     name: Deploy → QA
-    # needs: build-push
+    needs: build-push
     if: github.ref_name == 'qa'
     runs-on: self-hosted
     environment: qa
@@ -186,7 +186,7 @@ jobs:
   # ──────────────────────────────────────────────
   deploy-prod:
     name: Deploy → Prod
-    # needs: build-push
+    needs: build-push
     if: github.ref_name == 'main'
     runs-on: self-hosted
     environment: prod       # add required reviewers in GitHub repo Settings → Environments → prod
