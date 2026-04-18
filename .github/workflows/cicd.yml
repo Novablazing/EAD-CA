@@ -1,12 +1,12 @@
-name: Build and Deploy
+name: Automation Build and Deploy
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - dev
-      - qa
+  # push:
+  #   branches:
+  #     - main
+  #     - dev
+  #     - qa
     paths-ignore:
       - '.github/workflows/**'
 
@@ -74,43 +74,58 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
-  # # ──────────────────────────────────────────────
-  # #  Deploy to Dev  (push to dev branch)
-  # # ──────────────────────────────────────────────
-  # deploy-dev:
-  #   name: Deploy → Dev
-  #   needs: build-push
-  #   if: github.ref_name == 'dev'
-  #   runs-on: ubuntu-latest
-  #   environment: dev        # configure protection rules in GitHub repo Settings
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  deploy-dev:
+    name: Deploy → Dev
+    needs: build-push
+    if: github.ref_name == 'dev'
+    runs-on: self-hosted   # use self-hosted runner with Terraform, kubectl, Helm installed
+    environment: dev        # configure protection rules in GitHub repo Settings
 
-  #     - name: Set up Helm
-  #       uses: azure/setup-helm@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Configure kubeconfig (dev cluster)
-  #       run: |
-  #         mkdir -p ~/.kube
-  #         echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > ~/.kube/config
-  #         chmod 600 ~/.kube/config
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.5"
 
-  #     - name: Helm deploy to dev
-  #       run: |
-  #         helm upgrade --install food-app-dev ./helm/food-app \
-  #           -f ./helm/food-app/values-dev.yaml \
-  #           --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
-  #           --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
-  #           --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
-  #           --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
-  #           --wait --timeout 5m
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
 
-  #     - name: Verify rollout
-  #       run: |
-  #         kubectl rollout status deployment/recipe-backend -n food-dev
-  #         kubectl rollout status deployment/recipe-frontend -n food-dev
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: terraform plan -var-file=dev.tfvars -out=tfplan-dev
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan-dev
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Configure kubeconfig (dev cluster)
+        run: |
+          mkdir -p ~/.kube
+          cp /home/vyshnav/myworkspace/kubeconfig-dev ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Helm deploy to dev
+        run: |
+          helm upgrade --install food-app-dev ./helm/food-app \
+            -f ./helm/food-app/values-dev.yaml \
+            --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
+            --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
+            --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
+            --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
+            --wait --timeout 5m
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/recipe-backend -n food-dev
+          kubectl rollout status deployment/recipe-frontend -n food-dev
 
   # # ──────────────────────────────────────────────
   # #  Deploy to QA  (push to qa branch)
@@ -119,7 +134,7 @@ jobs:
   #   name: Deploy → QA
   #   needs: build-push
   #   if: github.ref_name == 'qa'
-  #   runs-on: ubuntu-latest
+  #   runs-on: self-hosted   # use self-hosted runner with Terraform, kubectl, Helm installed
   #   environment: qa         # configure protection rules in GitHub repo Settings
 
   #   steps:
