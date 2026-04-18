@@ -45,7 +45,7 @@ runcmd:
 
   # Wait for k3s to be ready
   - |
-    until kubectl get nodes 2>/dev/null | grep -q " Ready"; do
+    until KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl get nodes 2>/dev/null | grep -q " Ready"; do
       echo "Waiting for k3s to be ready..."
       sleep 5
     done
