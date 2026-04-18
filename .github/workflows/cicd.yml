@@ -103,6 +103,18 @@ jobs:
           cp /home/vyshnav/kubeconfigenv/kubeconfig-dev ~/.kube/config
           chmod 600 ~/.kube/config
 
+      - name: Create GHCR imagePullSecret
+        env:
+          KUBECONFIG: /home/vyshnav/kubeconfigenv/kubeconfig-dev
+        run: |
+          kubectl create namespace food-dev --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret docker-registry ghcr-secret \
+            --namespace food-dev \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Helm deploy to dev
         run: |
           helm upgrade --install food-app-dev ./helm/food-app \
