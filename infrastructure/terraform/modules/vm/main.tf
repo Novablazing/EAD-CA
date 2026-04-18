@@ -160,6 +160,7 @@ resource "null_resource" "fetch_kubeconfig" {
 
       sed 's/127\.0\.0\.1/${azurerm_public_ip.this.ip_address}/g' \
         /tmp/kubeconfig-${var.environment}-raw.yaml \
+      | sed 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/' \
         > ${var.kubeconfig_local_path}/kubeconfig-${var.environment}
 
       rm -f /tmp/kubeconfig-${var.environment}-raw.yaml
