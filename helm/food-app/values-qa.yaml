@@ -1,9 +1,5 @@
 namespace: food-qa
 
-imagePullSecret:
-  username: ""
-  password: ""
-
 backend:
   image: ghcr.io/novablazing/food-backend
   tag: qa

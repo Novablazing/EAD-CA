@@ -108,12 +108,12 @@ jobs:
           helm upgrade --install food-app-dev ./helm/food-app \
             -f ./helm/food-app/values-dev.yaml \
             --kubeconfig /home/vyshnav/kubeconfigenv/kubeconfig-dev \
-            --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
+            --set backend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-backend \
             --set backend.tag=dev \
-            --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
+            --set frontend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-frontend \
             --set frontend.tag=dev \
-            --set imagePullSecret.username=${{ github.actor }} \
-            --set imagePullSecret.password=${{ secrets.GITHUB_TOKEN }} \
+            --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
+            --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
             --wait --timeout 5m
 
       - name: Verify rollout
@@ -165,12 +165,12 @@ jobs:
           helm upgrade --install food-app-qa ./helm/food-app \
             -f ./helm/food-app/values-qa.yaml \
             --kubeconfig /home/vyshnav/kubeconfigenv/kubeconfig-qa \
-            --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
+            --set backend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-backend \
             --set backend.tag=qa \
-            --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
+            --set frontend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-frontend \
             --set frontend.tag=qa \
-            --set imagePullSecret.username=${{ github.actor }} \
-            --set imagePullSecret.password=${{ secrets.GITHUB_TOKEN }} \
+            --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
+            --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
             --wait --timeout 5m
 
       - name: Verify rollout
@@ -224,12 +224,12 @@ jobs:
           helm upgrade --install food-app-prod ./helm/food-app \
             -f ./helm/food-app/values-prod.yaml \
             --kubeconfig /home/vyshnav/kubeconfigenv/kubeconfig-prod \
-            --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
+            --set backend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-backend \
             --set backend.tag=v1 \
-            --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
+            --set frontend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-frontend \
             --set frontend.tag=v1 \
-            --set imagePullSecret.username=${{ github.actor }} \
-            --set imagePullSecret.password=${{ secrets.GITHUB_TOKEN }} \
+            --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
+            --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
             --wait --timeout 5m
 
       - name: Verify rollout
