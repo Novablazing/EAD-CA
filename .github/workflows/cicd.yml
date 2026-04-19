@@ -89,6 +89,10 @@ jobs:
         working-directory: infrastructure/terraform
         run: terraform init
 
+      - name: Terraform Workspace (dev)
+        working-directory: infrastructure/terraform
+        run: terraform workspace select dev || terraform workspace new dev
+
       - name: Terraform Plan
         working-directory: infrastructure/terraform
         run: terraform plan -var-file=dev.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-dev
@@ -140,6 +144,10 @@ jobs:
         working-directory: infrastructure/terraform
         run: terraform init
 
+      - name: Terraform Workspace (qa)
+        working-directory: infrastructure/terraform
+        run: terraform workspace select qa || terraform workspace new qa
+
       - name: Terraform Plan
         working-directory: infrastructure/terraform
         run: terraform plan -var-file=qa.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-qa
@@ -165,7 +173,6 @@ jobs:
             --set frontend.tag=qa \
             --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
             --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
-            --wait --timeout 5m
 
       - name: Verify rollout
         env:
@@ -199,6 +206,10 @@ jobs:
         working-directory: infrastructure/terraform
         run: terraform init
 
+      - name: Terraform Workspace (prod)
+        working-directory: infrastructure/terraform
+        run: terraform workspace select prod || terraform workspace new prod
+
       - name: Terraform Plan
         working-directory: infrastructure/terraform
         run: terraform plan -var-file=prod.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-prod
@@ -224,7 +235,6 @@ jobs:
             --set frontend.tag=v1 \
             --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
             --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
-            --wait --timeout 5m
 
       - name: Verify rollout
         env:
