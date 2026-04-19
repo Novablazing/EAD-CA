@@ -17,7 +17,7 @@ variable "location" {
 variable "vm_size" {
   description = "Azure VM SKU applied to every environment"
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_B2s"
 }
 
 variable "admin_username" {
@@ -58,7 +58,7 @@ variable "tags" {
 variable "kubeconfig_local_path" {
   description = "Local directory where per-environment kubeconfig files are saved after provisioning (e.g. kubeconfig-dev)"
   type        = string
-  default     = "/home/vyshnav/myworkspace"
+  default     = "/home/vyshnav/kubeconfigenv"
 }
 
 # ---------------------------------------------------------------------------

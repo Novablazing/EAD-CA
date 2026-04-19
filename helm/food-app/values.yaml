@@ -1,5 +1,9 @@
 namespace: food
 
+imagePullSecret:
+  username: ""
+  password: ""
+
 backend:
   name: recipe-backend
   image: backend
