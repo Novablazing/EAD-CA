@@ -6,7 +6,8 @@ data "azurerm_resource_group" "main" {
 }
 
 # ---------------------------------------------------------------------------
-# Shared Virtual Network — all environments live inside this single VNet
+# Shared Virtual Network — all environments live inside this single VNet.
+# Whichever workspace runs first creates it; subsequent workspaces import it.
 # ---------------------------------------------------------------------------
 resource "azurerm_virtual_network" "shared" {
   name                = "vnet-k3s-shared"
