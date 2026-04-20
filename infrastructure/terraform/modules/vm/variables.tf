@@ -44,7 +44,7 @@ variable "admin_password" {
 }
 
 variable "subnet_id" {
-  description = "ID of the subnet (in the shared VNet) to attach this VM to"
+  description = "ID of the environment-specific subnet to attach this VM to"
   type        = string
 }
 
