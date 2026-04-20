@@ -44,6 +44,18 @@ resource "azurerm_network_security_group" "this" {
     source_address_prefixes    = var.allowed_ssh_cidr
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "allow-22137"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22137"
+    source_address_prefixes    = var.allowed_ssh_cidr
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_network_interface_security_group_association" "this" {
