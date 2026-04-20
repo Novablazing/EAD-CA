@@ -37,12 +37,6 @@ variable "admin_password" {
   }
 }
 
-variable "vnet_address_space" {
-  description = "Address space for the single shared Virtual Network"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
 variable "os_disk_size_gb" {
   description = "OS disk size in GB"
   type        = number
@@ -68,6 +62,7 @@ variable "kubeconfig_local_path" {
 variable "environments" {
   description = "Map of environment-specific settings keyed by environment name (dev, qa, prod)."
   type = map(object({
+    vnet_address_space    = string
     subnet_address_prefix = string
     os_disk_type          = string
     allowed_ssh_cidr      = list(string)
