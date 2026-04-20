@@ -86,12 +86,3 @@ jobs:
           kubectl rollout status deployment/recipe-frontend \
             -n ${{ steps.env_config.outputs.namespace }}
 
-      - name: Show active release status
-        if: always()
-        env:
-          KUBECONFIG: ${{ steps.env_config.outputs.kubeconfig }}
-        run: |
-          echo "=== Current Helm release status ==="
-          helm status ${{ steps.env_config.outputs.release }} \
-            --namespace ${{ steps.env_config.outputs.namespace }} \
-            --kubeconfig ${{ steps.env_config.outputs.kubeconfig }}
