@@ -205,12 +205,26 @@ jobs:
         working-directory: infrastructure/terraform
         run: terraform workspace select prod || terraform workspace new prod
 
+      - name: Check existing tfstate (prod)
+        id: tfstate-prod
+        working-directory: infrastructure/terraform
+        run: |
+          STATEFILE="terraform.tfstate.d/prod/terraform.tfstate"
+          if [ -f "$STATEFILE" ] && [ "$(jq '.resources | length' "$STATEFILE" 2>/dev/null || echo 0)" -gt 0 ]; then
+            echo "provisioned=true" >> $GITHUB_OUTPUT
+            echo "Infrastructure already provisioned, skipping apply."
+          else
+            echo "provisioned=false" >> $GITHUB_OUTPUT
+            echo "No existing tfstate found, will provision."
+          fi
+
       - name: Terraform Plan
         working-directory: infrastructure/terraform
         run: terraform plan -var-file=prod.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-prod
 
       - name: Terraform Apply
         working-directory: infrastructure/terraform
+        if: steps.tfstate-prod.outputs.provisioned == 'false'
         run: terraform apply -auto-approve tfplan-prod
 
       - name: Configure kubeconfig (prod cluster)
