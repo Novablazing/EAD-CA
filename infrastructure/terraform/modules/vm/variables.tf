@@ -23,7 +23,7 @@ variable "resource_group_name" {
 variable "vm_size" {
   description = "Azure VM size/SKU"
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_B2s"
 }
 
 variable "admin_username" {
@@ -99,5 +99,5 @@ variable "tags" {
 variable "kubeconfig_local_path" {
   description = "Local directory where the k3s kubeconfig is saved after provisioning (file: kubeconfig-<environment>)"
   type        = string
-  default     = "/home/vyshnav/myworkspace"
+  default     = "/home/vyshnav/kubeconfigenv"
 }

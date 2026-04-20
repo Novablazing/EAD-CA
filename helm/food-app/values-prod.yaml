@@ -1,7 +1,11 @@
 namespace: food-prod
 
+imagePullSecret:
+  username: ""
+  password: ""
+
 backend:
-  image: ghcr.io/OWNER/food-backend
+  image: ghcr.io/novablazing/food-backend
   tag: v1
   imagePullPolicy: IfNotPresent
   replicas: 3
@@ -11,7 +15,7 @@ backend:
     databaseCollection: "ead_2024"
 
 frontend:
-  image: ghcr.io/OWNER/food-frontend
+  image: ghcr.io/novablazing/food-frontend
   tag: v1
   imagePullPolicy: IfNotPresent
   replicas: 3

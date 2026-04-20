@@ -17,7 +17,7 @@ variable "location" {
 variable "vm_size" {
   description = "Azure VM SKU applied to every environment"
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_B2s"
 }
 
 variable "admin_username" {
@@ -37,12 +37,6 @@ variable "admin_password" {
   }
 }
 
-variable "vnet_address_space" {
-  description = "Address space for the single shared Virtual Network"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
 variable "os_disk_size_gb" {
   description = "OS disk size in GB"
   type        = number
@@ -58,7 +52,7 @@ variable "tags" {
 variable "kubeconfig_local_path" {
   description = "Local directory where per-environment kubeconfig files are saved after provisioning (e.g. kubeconfig-dev)"
   type        = string
-  default     = "/home/vyshnav/myworkspace"
+  default     = "/home/vyshnav/kubeconfigenv"
 }
 
 # ---------------------------------------------------------------------------
@@ -68,6 +62,7 @@ variable "kubeconfig_local_path" {
 variable "environments" {
   description = "Map of environment-specific settings keyed by environment name (dev, qa, prod)."
   type = map(object({
+    vnet_address_space    = string
     subnet_address_prefix = string
     os_disk_type          = string
     allowed_ssh_cidr      = list(string)

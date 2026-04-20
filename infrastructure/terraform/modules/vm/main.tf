@@ -12,6 +12,46 @@ locals {
 }
 
 # -------------------------------------------------------------------
+# Network Security Group — allows SSH and Kubernetes API access
+# -------------------------------------------------------------------
+
+resource "azurerm_network_security_group" "this" {
+  name                = "nsg-${local.name_prefix}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  tags                = local.tags
+
+  security_rule {
+    name                       = "allow-ssh"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefixes    = var.allowed_ssh_cidr
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "allow-k8s-api"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "6443"
+    source_address_prefixes    = var.allowed_ssh_cidr
+    destination_address_prefix = "*"
+  }
+}
+
+resource "azurerm_network_interface_security_group_association" "this" {
+  network_interface_id      = azurerm_network_interface.this.id
+  network_security_group_id = azurerm_network_security_group.this.id
+}
+
+# -------------------------------------------------------------------
 # Public IP & Network Interface
 # -------------------------------------------------------------------
 
@@ -86,7 +126,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 #   macOS:         brew install hudochenkov/sshpass/sshpass
 # ---------------------------------------------------------------------------
 resource "null_resource" "fetch_kubeconfig" {
-  depends_on = [azurerm_linux_virtual_machine.this]
+  depends_on = [azurerm_linux_virtual_machine.this, azurerm_network_interface_security_group_association.this]
 
   triggers = {
     vm_id = azurerm_linux_virtual_machine.this.id
@@ -120,6 +160,7 @@ resource "null_resource" "fetch_kubeconfig" {
 
       sed 's/127\.0\.0\.1/${azurerm_public_ip.this.ip_address}/g' \
         /tmp/kubeconfig-${var.environment}-raw.yaml \
+      | sed 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/' \
         > ${var.kubeconfig_local_path}/kubeconfig-${var.environment}
 
       rm -f /tmp/kubeconfig-${var.environment}-raw.yaml

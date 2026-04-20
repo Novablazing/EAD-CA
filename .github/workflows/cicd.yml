@@ -2,85 +2,196 @@ name: Automation Build and Deploy
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
-  #     - dev
-  #     - qa
+  push:
+    branches:
+      - main
+      - dev
+      - qa
     paths-ignore:
       - '.github/workflows/**'
 
 jobs:
-  build-push:
-    name: Build & Push Docker Images
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-      packages: write
-    outputs:
-      image_tag: ${{ steps.vars.outputs.tag }}
+#  build-push:
+#    name: Build & Push Docker Images
+#    runs-on: ubuntu-22.04
+#    permissions:
+#      contents: read
+#      packages: write
+#    outputs:
+#      image_tag: ${{ steps.vars.outputs.tag }}
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Resolve image tag from branch
+#        id: vars
+#        run: |
+#          case "${{ github.ref_name }}" in
+#            main) echo "tag=v1"  >> $GITHUB_OUTPUT ;;
+#            qa)   echo "tag=qa"  >> $GITHUB_OUTPUT ;;
+#            *)    echo "tag=dev" >> $GITHUB_OUTPUT ;;
+#          esac
+#
+#      - name: Log in to GitHub Container Registry
+#        uses: docker/login-action@v3
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Build & push backend image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./app/Backend
+#          push: true
+#          tags: ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}
+#
+#      - name: Build & push frontend image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./app/Frontend
+#          push: true
+#          tags: ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}
+#
+#      - name: Run Trivy vulnerability scanner (backend)
+#        uses: aquasecurity/trivy-action@0.35.0
+#        with:
+#          image-ref: 'ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}'
+#          format: 'table'
+#          output: 'trivy-backend-report.txt'
+#          ignore-unfixed: true
+#          vuln-type: 'os,library'
+#          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+#
+#      - name: Run Trivy vulnerability scanner (frontend)
+#        uses: aquasecurity/trivy-action@0.35.0
+#        with:
+#          image-ref: 'ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}'
+#          format: 'table'
+#          output: 'trivy-frontend-report.txt'
+#          ignore-unfixed: true
+#          vuln-type: 'os,library'
+#          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+
+  deploy-dev:
+    name: Deploy → Dev
+    # needs: build-push
+    if: github.ref_name == 'dev'
+    runs-on: self-hosted   # use self-hosted runner with Terraform, kubectl, Helm installed
+    environment: dev        # configure protection rules in GitHub repo Settings
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Resolve image tag from branch
-        id: vars
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
+
+      - name: Terraform Workspace (dev)
+        working-directory: infrastructure/terraform
+        run: terraform workspace select dev || terraform workspace new dev
+
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: terraform plan -var-file=dev.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-dev
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan-dev
+
+      - name: Configure kubeconfig (dev cluster)
         run: |
-          case "${{ github.ref_name }}" in
-            main) echo "tag=v1"  >> $GITHUB_OUTPUT ;;
-            qa)   echo "tag=qa"  >> $GITHUB_OUTPUT ;;
-            *)    echo "tag=dev" >> $GITHUB_OUTPUT ;;
-          esac
+          mkdir -p /home/vyshnav/kubeconfigenv
+          cp /home/vyshnav/kubeconfigenv/kubeconfig-dev ~/.kube/config
+          chmod 600 ~/.kube/config
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Helm deploy to dev
+        run: |
+          helm upgrade --install food-app-dev ./helm/food-app \
+            -f ./helm/food-app/values-dev.yaml \
+            --kubeconfig /home/vyshnav/kubeconfigenv/kubeconfig-dev \
+            --set backend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-backend \
+            --set backend.tag=dev \
+            --set frontend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-frontend \
+            --set frontend.tag=dev \
+            --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
+            --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }}
 
-      - name: Build & push backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app/Backend
-          push: true
-          tags: ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}
+      - name: Verify rollout
+        env:
+          KUBECONFIG: /home/vyshnav/kubeconfigenv/kubeconfig-dev
+        run: |
+          kubectl rollout status deployment/recipe-backend -n food-dev
+          kubectl rollout status deployment/recipe-frontend -n food-dev
 
-      - name: Build & push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app/Frontend
-          push: true
-          tags: ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}
+  # ──────────────────────────────────────────────
+  #  Deploy to QA  (push to qa branch)
+  # ──────────────────────────────────────────────
+  deploy-qa:
+    name: Deploy → QA
+    # needs: build-push
+    if: github.ref_name == 'qa'
+    runs-on: self-hosted
+    environment: qa
 
-      - name: Run Trivy vulnerability scanner (backend)
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: 'ghcr.io/novablazing/food-backend:${{ steps.vars.outputs.tag }}'
-          format: 'table'
-          output: 'trivy-backend-report.txt'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner (frontend)
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: 'ghcr.io/novablazing/food-frontend:${{ steps.vars.outputs.tag }}'
-          format: 'table'
-          output: 'trivy-frontend-report.txt'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
 
+      - name: Terraform Workspace (qa)
+        working-directory: infrastructure/terraform
+        run: terraform workspace select qa || terraform workspace new qa
 
-  deploy-dev:
-    name: Deploy → Dev
-    needs: build-push
-    if: github.ref_name == 'dev'
-    runs-on: self-hosted   # use self-hosted runner with Terraform, kubectl, Helm installed
-    environment: dev        # configure protection rules in GitHub repo Settings
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: terraform plan -var-file=qa.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-qa
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan-qa
+
+      - name: Configure kubeconfig (qa cluster)
+        run: |
+          mkdir -p /home/vyshnav/kubeconfigenv
+          cp /home/vyshnav/kubeconfigenv/kubeconfig-qa ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Helm deploy to QA
+        run: |
+          helm upgrade --install food-app-qa ./helm/food-app \
+            -f ./helm/food-app/values-qa.yaml \
+            --kubeconfig /home/vyshnav/kubeconfigenv/kubeconfig-qa \
+            --set backend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-backend \
+            --set backend.tag=qa \
+            --set frontend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-frontend \
+            --set frontend.tag=qa \
+            --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
+            --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
+
+      - name: Verify rollout
+        env:
+          KUBECONFIG: /home/vyshnav/kubeconfigenv/kubeconfig-qa
+        run: |
+          kubectl rollout status deployment/recipe-backend -n food-qa
+          kubectl rollout status deployment/recipe-frontend -n food-qa
+
+  # ──────────────────────────────────────────────
+  #  Deploy to Prod  (push to main branch)
+  #     Pauses for manual approval via GitHub
+  #     Environment protection rules before running
+  # ──────────────────────────────────────────────
+  deploy-prod:
+    name: Deploy → Prod
+    # needs: build-push
+    if: github.ref_name == 'main'
+    runs-on: self-hosted
+    environment: prod       # add required reviewers in GitHub repo Settings → Environments → prod
 
     steps:
       - name: Checkout code
@@ -95,112 +206,39 @@ jobs:
         working-directory: infrastructure/terraform
         run: terraform init
 
+      - name: Terraform Workspace (prod)
+        working-directory: infrastructure/terraform
+        run: terraform workspace select prod || terraform workspace new prod
+
       - name: Terraform Plan
         working-directory: infrastructure/terraform
-        run: terraform plan -var-file=dev.tfvars -out=tfplan-dev
+        run: terraform plan -var-file=prod.tfvars -var="admin_password=${{ secrets.TF_ADMIN_PASSWORD }}" -out=tfplan-prod
 
       - name: Terraform Apply
         working-directory: infrastructure/terraform
-        run: terraform apply -auto-approve tfplan-dev
+        run: terraform apply -auto-approve tfplan-prod
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-
-      - name: Configure kubeconfig (dev cluster)
+      - name: Configure kubeconfig (prod cluster)
         run: |
-          mkdir -p ~/.kube
-          cp /home/vyshnav/myworkspace/kubeconfig-dev ~/.kube/config
+          mkdir -p /home/vyshnav/kubeconfigenv
+          cp /home/vyshnav/kubeconfigenv/kubeconfig-prod ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - name: Helm deploy to dev
+      - name: Helm deploy to Prod
         run: |
-          helm upgrade --install food-app-dev ./helm/food-app \
-            -f ./helm/food-app/values-dev.yaml \
-            --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
-            --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
-            --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
-            --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
-            --wait --timeout 5m
+          helm upgrade --install food-app-prod ./helm/food-app \
+            -f ./helm/food-app/values-prod.yaml \
+            --kubeconfig /home/vyshnav/kubeconfigenv/kubeconfig-prod \
+            --set backend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-backend \
+            --set backend.tag=v1 \
+            --set frontend.image=ghcr.io/${{ secrets.GHCR_USERNAME }}/food-frontend \
+            --set frontend.tag=v1 \
+            --set imagePullSecret.username=${{ secrets.GHCR_USERNAME }} \
+            --set imagePullSecret.password=${{ secrets.GHCR_TOKEN }} \
 
       - name: Verify rollout
+        env:
+          KUBECONFIG: /home/vyshnav/kubeconfigenv/kubeconfig-prod
         run: |
-          kubectl rollout status deployment/recipe-backend -n food-dev
-          kubectl rollout status deployment/recipe-frontend -n food-dev
-
-  # # ──────────────────────────────────────────────
-  # #  Deploy to QA  (push to qa branch)
-  # # ──────────────────────────────────────────────
-  # deploy-qa:
-  #   name: Deploy → QA
-  #   needs: build-push
-  #   if: github.ref_name == 'qa'
-  #   runs-on: self-hosted   # use self-hosted runner with Terraform, kubectl, Helm installed
-  #   environment: qa         # configure protection rules in GitHub repo Settings
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Helm
-  #       uses: azure/setup-helm@v3
-
-  #     - name: Configure kubeconfig (qa cluster)
-  #       run: |
-  #         mkdir -p ~/.kube
-  #         echo "${{ secrets.KUBECONFIG_QA }}" | base64 -d > ~/.kube/config
-  #         chmod 600 ~/.kube/config
-
-  #     - name: Helm deploy to QA
-  #       run: |
-  #         helm upgrade --install food-app-qa ./helm/food-app \
-  #           -f ./helm/food-app/values-qa.yaml \
-  #           --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
-  #           --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
-  #           --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
-  #           --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
-  #           --wait --timeout 5m
-
-  #     - name: Verify rollout
-  #       run: |
-  #         kubectl rollout status deployment/recipe-backend -n food-qa
-  #         kubectl rollout status deployment/recipe-frontend -n food-qa
-
-  # # ──────────────────────────────────────────────
-  # #  Deploy to Prod  (push to main branch)
-  # #     Pauses for manual approval via GitHub
-  # #     Environment protection rules before running
-  # # ──────────────────────────────────────────────
-  # deploy-prod:
-  #   name: Deploy → Prod
-  #   needs: build-push
-  #   if: github.ref_name == 'main'
-  #   runs-on: ubuntu-latest
-  #   environment: prod       # add required reviewers in GitHub repo Settings → Environments → prod
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Helm
-  #       uses: azure/setup-helm@v3
-
-  #     - name: Configure kubeconfig (prod cluster)
-  #       run: |
-  #         mkdir -p ~/.kube
-  #         echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > ~/.kube/config
-  #         chmod 600 ~/.kube/config
-
-  #     - name: Helm deploy to Prod
-  #       run: |
-  #         helm upgrade --install food-app-prod ./helm/food-app \
-  #           -f ./helm/food-app/values-prod.yaml \
-  #           --set backend.image=ghcr.io/${{ github.repository_owner }}/food-backend \
-  #           --set backend.tag=${{ needs.build-push.outputs.image_tag }} \
-  #           --set frontend.image=ghcr.io/${{ github.repository_owner }}/food-frontend \
-  #           --set frontend.tag=${{ needs.build-push.outputs.image_tag }} \
-  #           --wait --timeout 5m
-
-  #     - name: Verify rollout
-  #       run: |
-  #         kubectl rollout status deployment/recipe-backend -n food-prod
-  #         kubectl rollout status deployment/recipe-frontend -n food-prod
+          kubectl rollout status deployment/recipe-backend -n food-prod
+          kubectl rollout status deployment/recipe-frontend -n food-prod

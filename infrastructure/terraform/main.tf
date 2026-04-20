@@ -6,25 +6,28 @@ data "azurerm_resource_group" "main" {
 }
 
 # ---------------------------------------------------------------------------
-# Shared Virtual Network — all environments live inside this single VNet
+# Per-environment Virtual Networks — fully isolated, no cross-env dependencies.
+# Each workspace only creates/manages its own VNet and subnet.
 # ---------------------------------------------------------------------------
-resource "azurerm_virtual_network" "shared" {
-  name                = "vnet-k3s-shared"
+resource "azurerm_virtual_network" "env" {
+  for_each            = var.environments
+  name                = "vnet-k3s-${each.key}"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  address_space       = [var.vnet_address_space]
+  address_space       = [each.value.vnet_address_space]
   tags = merge(var.tags, {
-    managed_by = "terraform"
-    project    = "k3s"
+    managed_by  = "terraform"
+    project     = "k3s"
+    environment = each.key
   })
 }
 
-# One dedicated subnet per environment within the shared VNet
+# One subnet per environment, inside its own VNet
 resource "azurerm_subnet" "env" {
   for_each             = var.environments
   name                 = "snet-k3s-${each.key}"
   resource_group_name  = data.azurerm_resource_group.main.name
-  virtual_network_name = azurerm_virtual_network.shared.name
+  virtual_network_name = azurerm_virtual_network.env[each.key].name
   address_prefixes     = [each.value.subnet_address_prefix]
 }
 
