@@ -199,7 +199,6 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infrastructure/terraform
-        if: steps.tfstate-prod.outputs.provisioned == 'false'
         run: terraform apply -auto-approve tfplan-prod
 
       - name: Configure kubeconfig (prod cluster)
