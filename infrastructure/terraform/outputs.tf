@@ -1,10 +1,10 @@
-output "shared_vnet_id" {
-  description = "Resource ID of the shared Virtual Network"
-  value       = azurerm_virtual_network.shared.id
+output "vnet_ids" {
+  description = "Resource ID of each environment's Virtual Network"
+  value       = { for env, vnet in azurerm_virtual_network.env : env => vnet.id }
 }
 
 output "subnet_ids" {
-  description = "Subnet ID for each environment within the shared VNet"
+  description = "Subnet ID for each environment"
   value       = { for env, snet in azurerm_subnet.env : env => snet.id }
 }
 

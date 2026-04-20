@@ -25,7 +25,8 @@ tags = {
 }
 
 # ---------------------------------------------------------------------------
-# Per-environment settings — each environment has its own isolated VNet
+# Per-environment settings — all environments share the EADCA2 resource group
+# but each has its own isolated VNet, subnet, NSG, NIC and VM.
 # ---------------------------------------------------------------------------
 environments = {
   dev = {
