@@ -1,18 +1,18 @@
 # ---------------------------------------------------------------------------
-# Lookup the existing shared resource group
+# Shared resource group — all environments live under EADCA2 (France Central).
+# Resources are isolated by name prefix per environment, not by resource group.
 # ---------------------------------------------------------------------------
 data "azurerm_resource_group" "main" {
   name = var.resource_group_name
 }
 
 # ---------------------------------------------------------------------------
-# Per-environment Virtual Networks — fully isolated, no cross-env dependencies.
-# Each workspace only creates/manages its own VNet and subnet.
+# Per-environment Virtual Networks — each env has its own isolated VNet/subnet.
 # ---------------------------------------------------------------------------
 resource "azurerm_virtual_network" "env" {
   for_each            = var.environments
   name                = "vnet-k3s-${each.key}"
-  location            = var.location
+  location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
   address_space       = [each.value.vnet_address_space]
   tags = merge(var.tags, {
@@ -32,14 +32,14 @@ resource "azurerm_subnet" "env" {
 }
 
 # ---------------------------------------------------------------------------
-# k3s VMs — one per environment, all attached to the shared VNet
+# k3s VMs — one per environment, each with its own VNet, subnet, NSG and NIC
 # ---------------------------------------------------------------------------
 module "k3s_vm" {
   for_each = var.environments
   source   = "./modules/vm"
 
   environment         = each.key
-  location            = var.location
+  location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
   vm_size             = var.vm_size
 
