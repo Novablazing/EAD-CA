@@ -57,36 +57,6 @@ jobs:
           cp ${{ steps.env_config.outputs.kubeconfig }} ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - name: Show Helm release history
-        env:
-          KUBECONFIG: ${{ steps.env_config.outputs.kubeconfig }}
-        run: |
-          echo "=== Helm history for ${{ steps.env_config.outputs.release }} ==="
-          helm history ${{ steps.env_config.outputs.release }} \
-            --namespace ${{ steps.env_config.outputs.namespace }} \
-            --kubeconfig ${{ steps.env_config.outputs.kubeconfig }} \
-            --max 20
-
-      - name: Validate revision
-        env:
-          KUBECONFIG: ${{ steps.env_config.outputs.kubeconfig }}
-        run: |
-          REVISION="${{ github.event.inputs.helm_revision }}"
-          if [[ "$REVISION" != "0" && -n "$REVISION" ]]; then
-            EXISTS=$(helm history ${{ steps.env_config.outputs.release }} \
-              --namespace ${{ steps.env_config.outputs.namespace }} \
-              --kubeconfig ${{ steps.env_config.outputs.kubeconfig }} \
-              --max 100 --output json | jq --argjson rev "$REVISION" \
-              '[.[] | select(.revision == $rev)] | length')
-            if [[ "$EXISTS" -eq 0 ]]; then
-              echo "::error::Revision $REVISION does not exist for release ${{ steps.env_config.outputs.release }}."
-              exit 1
-            fi
-            echo "Revision $REVISION found. Proceeding with rollback."
-          else
-            echo "No specific revision provided. Will roll back to previous release."
-          fi
-
       - name: Helm rollback
         env:
           KUBECONFIG: ${{ steps.env_config.outputs.kubeconfig }}
@@ -95,7 +65,7 @@ jobs:
           echo "Rolling back ${{ steps.env_config.outputs.release }} in ${{ steps.env_config.outputs.namespace }}..."
           if [[ "$REVISION" == "0" || -z "$REVISION" ]]; then
             helm rollback ${{ steps.env_config.outputs.release }} \
-              --namespace ${{ steps.env_config.outputs.namespace }} \
+              --namespace default \
               --kubeconfig ${{ steps.env_config.outputs.kubeconfig }} \
               --wait \
               --timeout 5m0s
