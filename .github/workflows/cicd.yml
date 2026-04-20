@@ -87,11 +87,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: infrastructure/terraform
-        run: terraform init
-
-      - name: Terraform Workspace (dev)
-        working-directory: infrastructure/terraform
-        run: terraform workspace select dev || terraform workspace new dev
+        run: terraform init -reconfigure -backend-config="path=/home/vyshnav/tfstate/dev/terraform.tfstate"
 
       - name: Terraform Plan
         working-directory: infrastructure/terraform
@@ -142,11 +138,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: infrastructure/terraform
-        run: terraform init
-
-      - name: Terraform Workspace (qa)
-        working-directory: infrastructure/terraform
-        run: terraform workspace select qa || terraform workspace new qa
+        run: terraform init -reconfigure -backend-config="path=/home/vyshnav/tfstate/qa/terraform.tfstate"
 
       - name: Terraform Plan
         working-directory: infrastructure/terraform
@@ -199,11 +191,19 @@ jobs:
 
       - name: Terraform Init
         working-directory: infrastructure/terraform
-        run: terraform init
+        run: terraform init -reconfigure -backend-config="path=/home/vyshnav/tfstate/prod/terraform.tfstate"
 
-      - name: Terraform Workspace (prod)
-        working-directory: infrastructure/terraform
-        run: terraform workspace select prod || terraform workspace new prod
+      - name: Check existing tfstate (prod)
+        id: tfstate-prod
+        run: |
+          STATEFILE="/home/vyshnav/tfstate/prod/terraform.tfstate"
+          if [ -f "$STATEFILE" ] && [ "$(jq '.resources | length' "$STATEFILE" 2>/dev/null || echo 0)" -gt 0 ]; then
+            echo "provisioned=true" >> $GITHUB_OUTPUT
+            echo "Infrastructure already provisioned, skipping apply."
+          else
+            echo "provisioned=false" >> $GITHUB_OUTPUT
+            echo "No existing tfstate found, will provision."
+          fi
 
       - name: Terraform Plan
         working-directory: infrastructure/terraform
@@ -211,6 +211,7 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infrastructure/terraform
+        if: steps.tfstate-prod.outputs.provisioned == 'false'
         run: terraform apply -auto-approve tfplan-prod
 
       - name: Configure kubeconfig (prod cluster)

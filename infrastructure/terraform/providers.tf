@@ -12,9 +12,9 @@ terraform {
     }
   }
 
-  backend "local" {
-    path = "/home/vyshnav/tfstate/terraform.tfstate"
-  }
+  # Path is supplied at init time via -backend-config so each environment
+  # gets its own isolated state file under /home/vyshnav/tfstate/<env>/.
+  backend "local" {}
 }
 
 # ---------------------------------------------------------------------------
