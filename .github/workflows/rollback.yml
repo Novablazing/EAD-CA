@@ -1,4 +1,4 @@
-name: Helm Rollback – Food App
+name: Helm Rollback
 
 on:
   workflow_dispatch:
