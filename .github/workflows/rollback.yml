@@ -1,4 +1,4 @@
-name: Helm Rollback – Food App
+name: Helm Rollback
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ on:
 
 jobs:
   rollback:
-    name: Rollback → ${{ github.event.inputs.environment }}
+    name: Rollback to ${{ github.event.inputs.environment }}
     runs-on: self-hosted
     environment: ${{ github.event.inputs.environment }}   # triggers required-reviewer gate on prod
 
