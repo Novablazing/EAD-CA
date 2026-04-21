@@ -6,7 +6,9 @@ metadata:
   labels:
     app: {{ .Values.frontend.name }}
 spec:
+  {{- if not .Values.frontend.hpa.enabled }}
   replicas: {{ .Values.frontend.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ .Values.frontend.name }}
@@ -23,3 +25,10 @@ spec:
         imagePullPolicy: {{ .Values.frontend.imagePullPolicy }}
         ports:
         - containerPort: {{ .Values.frontend.port }}
+        resources:
+          requests:
+            cpu: {{ .Values.frontend.resources.requests.cpu }}
+            memory: {{ .Values.frontend.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.frontend.resources.limits.cpu }}
+            memory: {{ .Values.frontend.resources.limits.memory }}

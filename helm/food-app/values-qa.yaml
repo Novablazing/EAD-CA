@@ -15,6 +15,11 @@ frontend:
   tag: qa
   imagePullPolicy: Always
   replicas: 2
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
 
 mongodb:
   replicas: 1

@@ -29,6 +29,18 @@ frontend:
   service:
     type: LoadBalancer
     port: 22137
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
 
 mongodb:
   name: mongodb
