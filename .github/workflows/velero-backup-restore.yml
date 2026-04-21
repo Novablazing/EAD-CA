@@ -1,0 +1,97 @@
+name: Velero Backup & Restore
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+      action:
+        description: "Action to perform"
+        required: true
+        type: choice
+        options:
+          - backup
+          - restore
+      backup_name:
+        description: "Backup name (required for restore, auto-generated for backup)"
+        required: false
+        type: string
+
+jobs:
+  velero:
+    name: Velero ${{ inputs.action }} — ${{ inputs.environment }}
+    runs-on: self-hosted
+    env:
+      KUBECONFIG: /home/vyshnav/kubeconfigenv/kubeconfig-${{ inputs.environment }}
+      BACKUP_DIR: /home/vyshnav/valero/${{ inputs.environment }}
+
+    steps:
+      - name: Validate inputs
+        run: |
+          if [ "${{ inputs.action }}" = "restore" ] && [ -z "${{ inputs.backup_name }}" ]; then
+            echo "::error::backup_name is required for restore action"
+            exit 1
+          fi
+
+      - name: Verify Velero CLI
+        run: |
+          if ! command -v velero &> /dev/null; then
+            echo "::error::Velero CLI is not installed on this runner"
+            exit 1
+          fi
+          velero version --client-only
+
+      - name: Verify cluster connectivity
+        run: |
+          echo "Using kubeconfig: $KUBECONFIG"
+          kubectl cluster-info --kubeconfig "$KUBECONFIG"
+
+      - name: Create backup
+        if: inputs.action == 'backup'
+        run: |
+          BACKUP_NAME="${{ inputs.environment }}-backup-$(date +%Y%m%d-%H%M%S)"
+          echo "BACKUP_NAME=$BACKUP_NAME" >> "$GITHUB_ENV"
+
+          echo "Creating backup: $BACKUP_NAME"
+          velero backup create "$BACKUP_NAME" \
+            --kubeconfig "$KUBECONFIG" \
+            --wait
+
+          echo "Backup completed. Details:"
+          velero backup describe "$BACKUP_NAME" --kubeconfig "$KUBECONFIG"
+          velero backup logs "$BACKUP_NAME" --kubeconfig "$KUBECONFIG"
+
+      - name: Restore from backup
+        if: inputs.action == 'restore'
+        run: |
+          BACKUP_NAME="${{ inputs.backup_name }}"
+          echo "BACKUP_NAME=$BACKUP_NAME" >> "$GITHUB_ENV"
+
+          echo "Verifying backup exists: $BACKUP_NAME"
+          velero backup describe "$BACKUP_NAME" --kubeconfig "$KUBECONFIG"
+
+          echo "Restoring from backup: $BACKUP_NAME"
+          RESTORE_NAME="${BACKUP_NAME}-restore-$(date +%Y%m%d-%H%M%S)"
+          velero restore create "$RESTORE_NAME" \
+            --from-backup "$BACKUP_NAME" \
+            --kubeconfig "$KUBECONFIG" \
+            --wait
+
+          echo "Restore completed. Details:"
+          velero restore describe "$RESTORE_NAME" --kubeconfig "$KUBECONFIG"
+          velero restore logs "$RESTORE_NAME" --kubeconfig "$KUBECONFIG"
+
+      - name: Print summary
+        run: |
+          echo "========================================="
+          echo "Action:      ${{ inputs.action }}"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Backup Name: $BACKUP_NAME"
+          echo "Kubeconfig:  $KUBECONFIG"
+          echo "========================================="
