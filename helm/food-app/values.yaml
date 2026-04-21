@@ -72,11 +72,10 @@ frontend:
     timeoutSeconds: 3
     failureThreshold: 3
 
-nginx:
-  name: nginx
-  image: nginx
-  tag: stable
-  replicas: 1
+ingress:
+  name: food-app-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 
 mongodb:
   name: mongodb

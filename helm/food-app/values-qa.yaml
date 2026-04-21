@@ -21,8 +21,5 @@ frontend:
     maxReplicas: 4
     targetCPUUtilizationPercentage: 70
 
-nginx:
-  replicas: 2
-
 mongodb:
   replicas: 1

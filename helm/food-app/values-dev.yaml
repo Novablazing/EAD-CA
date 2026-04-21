@@ -18,8 +18,5 @@ frontend:
   hpa:
     enabled: false
 
-nginx:
-  replicas: 1
-
 mongodb:
   replicas: 1
