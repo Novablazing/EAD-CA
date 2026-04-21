@@ -43,7 +43,7 @@ frontend:
   replicas: 1
   port: 22137
   service:
-    type: LoadBalancer
+    type: ClusterIP
     port: 22137
   resources:
     requests:
@@ -71,6 +71,12 @@ frontend:
     periodSeconds: 5
     timeoutSeconds: 3
     failureThreshold: 3
+
+nginx:
+  name: nginx
+  image: nginx
+  tag: stable
+  replicas: 1
 
 mongodb:
   name: mongodb
