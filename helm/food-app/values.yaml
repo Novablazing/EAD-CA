@@ -78,6 +78,10 @@ mongodb:
   tag: latest
   replicas: 1
   port: 27017
+  storage:
+    size: 1Gi
+    hostPath: /mnt/data/mongodb
+    storageClassName: manual
   service:
     name: mongodb-service
     port: 27017
