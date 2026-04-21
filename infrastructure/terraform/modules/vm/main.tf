@@ -46,13 +46,13 @@ resource "azurerm_network_security_group" "this" {
   }
 
   security_rule {
-    name                       = "allow-22137"
+    name                       = "allow-http"
     priority                   = 120
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "22137"
+    destination_port_range     = "80"
     source_address_prefixes    = var.allowed_ssh_cidr
     destination_address_prefix = "*"
   }

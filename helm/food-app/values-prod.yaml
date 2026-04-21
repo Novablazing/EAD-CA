@@ -19,6 +19,11 @@ frontend:
   tag: v1
   imagePullPolicy: IfNotPresent
   replicas: 3
+  hpa:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
 
 mongodb:
   replicas: 1
