@@ -41,7 +41,7 @@ module "k3s_vm" {
   environment         = each.key
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  vm_size             = var.vm_size
+  vm_size             = coalesce(each.value.vm_size, var.vm_size)
 
   admin_username = var.admin_username
   admin_password = var.admin_password

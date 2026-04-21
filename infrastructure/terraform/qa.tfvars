@@ -16,5 +16,6 @@ environments = {
     subnet_address_prefix = "10.1.0.0/24"
     os_disk_type          = "Standard_LRS"
     allowed_ssh_cidr      = ["0.0.0.0/0"]
+    vm_size               = "Standard_B2s" # 2 vCPU / 4 GB
   }
 }

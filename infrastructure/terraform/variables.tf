@@ -15,7 +15,7 @@ variable "location" {
 }
 
 variable "vm_size" {
-  description = "Azure VM SKU applied to every environment"
+  description = "Default Azure VM SKU. Overridden per-environment via environments[*].vm_size."
   type        = string
   default     = "Standard_B2s"
 }
@@ -66,6 +66,7 @@ variable "environments" {
     subnet_address_prefix = string
     os_disk_type          = string
     allowed_ssh_cidr      = list(string)
+    vm_size               = optional(string) # overrides global var.vm_size when set
   }))
 
   validation {
