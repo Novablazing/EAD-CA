@@ -6,7 +6,7 @@ backend:
   imagePullPolicy: Always
   replicas: 1
   env:
-    databaseUrl: "mongodb://mongodb-service:27017/"
+    databaseUrl: "mongodb://mongouser:mongopass@mongodb-service:27017/?authSource=admin"
     databaseName: "ead_dev"
     databaseCollection: "ead_dev_2024"
 
@@ -20,3 +20,6 @@ frontend:
 
 mongodb:
   replicas: 1
+  auth:
+    rootUsername: mongouser
+    rootPassword: mongopass

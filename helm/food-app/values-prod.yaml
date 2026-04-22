@@ -10,9 +10,9 @@ backend:
   imagePullPolicy: IfNotPresent
   replicas: 3
   env:
-    databaseUrl: "mongodb://mongodb-service:27017/"
-    databaseName: "ead_ca2"
-    databaseCollection: "ead_2024"
+    databaseUrl: "mongodb://mongouser:mongopass@mongodb-service:27017/?authSource=admin"
+    databaseName: "ead_prod"
+    databaseCollection: "ead_prod_2024"
 
 frontend:
   image: ghcr.io/novablazing/food-frontend
@@ -27,3 +27,6 @@ frontend:
 
 mongodb:
   replicas: 1
+  auth:
+    rootUsername: mongouser
+    rootPassword: mongopass

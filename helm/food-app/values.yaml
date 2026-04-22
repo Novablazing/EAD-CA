@@ -12,9 +12,9 @@ backend:
   replicas: 1
   port: 8080
   env:
-    databaseUrl: "mongodb://mongodb-service:27017/"
-    databaseName: "ead_ca2"
-    databaseCollection: "ead_2024"
+    databaseUrl: "mongodb://mongouser:mongopass@mongodb-service:27017/?authSource=admin"
+    databaseName: "ead_prod"
+    databaseCollection: "ead_prod_2024"
   service:
     type: ClusterIP
     port: 8080
@@ -87,6 +87,9 @@ mongodb:
     size: 1Gi
     hostPath: /mnt/data/mongodb
     storageClassName: manual
+  auth:
+    rootUsername: mongouser
+    rootPassword: mongopass
   service:
     name: mongodb-service
     port: 27017

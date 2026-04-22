@@ -20,6 +20,17 @@ spec:
         image: {{ .Values.mongodb.image }}:{{ .Values.mongodb.tag }}
         ports:
         - containerPort: {{ .Values.mongodb.port }}
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongodb-root-username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongodb-root-password
         volumeMounts:
         - name: mongodb-data
           mountPath: /data/db
