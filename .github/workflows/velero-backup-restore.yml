@@ -39,14 +39,6 @@ jobs:
             exit 1
           fi
 
-      - name: Verify Velero CLI
-        run: |
-          if ! command -v velero &> /dev/null; then
-            echo "::error::Velero CLI is not installed on this runner"
-            exit 1
-          fi
-          velero version --client-only
-
       - name: Verify cluster connectivity
         run: |
           echo "Using kubeconfig: $KUBECONFIG"
