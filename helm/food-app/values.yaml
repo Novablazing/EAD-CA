@@ -90,3 +90,38 @@ mongodb:
   service:
     name: mongodb-service
     port: 27017
+
+# Velero backup configuration
+velero:
+  enabled: false
+  deployNodeAgent: false
+  configuration:
+    backupStorageLocation:
+      - name: default
+        provider: aws
+        bucket: velero-backups
+        config:
+          region: minio
+          s3ForcePathStyle: true
+          s3Url: http://minio.velero.svc:9000
+  credentials:
+    useSecret: true
+    secretContents:
+      cloud: |
+        [default]
+        aws_access_key_id = minio
+        aws_secret_access_key = minio123
+  initContainers:
+    - name: velero-plugin-for-aws
+      image: velero/velero-plugin-for-aws:v1.11.1
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+  schedules:
+    food-app-daily:
+      disabled: false
+      schedule: "0 2 * * *"
+      template:
+        includedNamespaces:
+          - food
+        ttl: "168h"

@@ -23,3 +23,14 @@ frontend:
 
 mongodb:
   replicas: 1
+
+velero:
+  enabled: true
+  schedules:
+    food-app-daily:
+      disabled: false
+      schedule: "0 2 * * *"
+      template:
+        includedNamespaces:
+          - food-qa
+        ttl: "168h"

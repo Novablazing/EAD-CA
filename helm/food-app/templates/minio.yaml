@@ -1,0 +1,83 @@
+{{- if .Values.velero.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: velero
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: velero
+  labels:
+    app: minio
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio
+          args: ["server", "/data", "--console-address", ":9001"]
+          env:
+            - name: MINIO_ROOT_USER
+              value: "minio"
+            - name: MINIO_ROOT_PASSWORD
+              value: "minio123"
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/data/minio
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: velero
+spec:
+  ports:
+    - port: 9000
+      name: api
+    - port: 9001
+      name: console
+  selector:
+    app: minio
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup
+  namespace: velero
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: minio/mc
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until mc alias set local http://minio:9000 minio minio123; do
+                echo "Waiting for MinIO..."
+                sleep 2
+              done
+              mc mb --ignore-existing local/velero-backups
+{{- end }}
