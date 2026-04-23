@@ -16,9 +16,10 @@ data:
       tag kubernetes.*
       read_from_head true
       <parse>
-        @type json
+        @type regexp
+        expression /^(?<time>\S+) (?<stream>stdout|stderr) (?<logtag>[FP]) (?<log>.*)$/
         time_key time
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        time_format %Y-%m-%dT%H:%M:%S.%N%z
         keep_time_key true
       </parse>
     </source>
