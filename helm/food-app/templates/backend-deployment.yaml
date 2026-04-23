@@ -7,6 +7,15 @@ metadata:
     app: {{ .Values.backend.name }}
 spec:
   replicas: {{ .Values.backend.replicas }}
+  {{- if .Values.backend.strategy }}
+  strategy:
+    type: {{ .Values.backend.strategy.type }}
+    {{- if eq .Values.backend.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.backend.strategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.backend.strategy.rollingUpdate.maxSurge }}
+    {{- end }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ .Values.backend.name }}
