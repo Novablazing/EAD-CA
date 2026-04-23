@@ -9,6 +9,11 @@ backend:
   tag: v1
   imagePullPolicy: IfNotPresent
   replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   env:
     databaseUrl: "mongodb://mongouser:mongopass@mongodb-service:27017/?authSource=admin"
     databaseName: "ead_prod"
@@ -19,6 +24,11 @@ frontend:
   tag: v1
   imagePullPolicy: IfNotPresent
   replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   hpa:
     enabled: true
     minReplicas: 3

@@ -44,6 +44,21 @@ jobs:
           echo "Using kubeconfig: $KUBECONFIG"
           kubectl cluster-info --kubeconfig "$KUBECONFIG"
 
+      - name: Verify Velero is installed
+        run: |
+          if ! kubectl get crd backups.velero.io --kubeconfig "$KUBECONFIG" &>/dev/null; then
+            echo "::error::Velero CRDs not found. Install Velero on the cluster first:"
+            echo "::error::  velero install --provider <provider> --bucket <bucket> --secret-file <creds> --kubeconfig $KUBECONFIG"
+            exit 1
+          fi
+          echo "Velero CRDs found."
+          kubectl get deployment -n velero --kubeconfig "$KUBECONFIG"
+          if ! kubectl get deployment velero -n velero --kubeconfig "$KUBECONFIG" &>/dev/null; then
+            echo "::error::Velero server deployment not found in the 'velero' namespace."
+            exit 1
+          fi
+          echo "Velero server is deployed."
+
       - name: Create backup
         if: inputs.action == 'backup'
         run: |
@@ -79,7 +94,7 @@ jobs:
           velero restore describe "$RESTORE_NAME" --kubeconfig "$KUBECONFIG"
           velero restore logs "$RESTORE_NAME" --kubeconfig "$KUBECONFIG"
 
-      - name: Print summary
+      - name: Summary
         run: |
           echo "========================================="
           echo "Action:      ${{ inputs.action }}"
