@@ -1,0 +1,37 @@
+{{- if .Values.fluentd.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.fluentd.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.fluentd.name }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.fluentd.name }}
+  labels:
+    app: {{ .Values.fluentd.name }}
+rules:
+- apiGroups: [""]
+  resources:
+  - pods
+  - namespaces
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.fluentd.name }}
+  labels:
+    app: {{ .Values.fluentd.name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.fluentd.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.fluentd.name }}
+  namespace: {{ .Values.namespace }}
+{{- end }}

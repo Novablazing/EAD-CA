@@ -1,0 +1,18 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.elasticsearch.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}
+spec:
+  type: {{ .Values.elasticsearch.service.type }}
+  ports:
+  - port: {{ .Values.elasticsearch.service.port }}
+    targetPort: {{ .Values.elasticsearch.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.elasticsearch.name }}
+{{- end }}

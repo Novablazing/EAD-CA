@@ -18,6 +18,15 @@ spec:
             name: {{ .Values.backend.name }}
             port:
               number: {{ .Values.backend.service.port }}
+      {{- if .Values.kibana.enabled }}
+      - path: /kibana
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.kibana.name }}
+            port:
+              number: {{ .Values.kibana.service.port }}
+      {{- end }}
       - path: /
         pathType: Prefix
         backend:
