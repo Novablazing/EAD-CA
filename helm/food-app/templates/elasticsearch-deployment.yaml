@@ -37,7 +37,11 @@ spec:
         - name: ES_JAVA_OPTS
           value: {{ .Values.elasticsearch.env.esJavaOpts | quote }}
         - name: xpack.security.enabled
-          value: {{ .Values.elasticsearch.env.xpackSecurityEnabled | quote }}
+          value: "true"
+        - name: xpack.security.authc.api_key.enabled
+          value: "true"
+        - name: ELASTIC_PASSWORD
+          value: "changeme"
         resources:
           requests:
             cpu: {{ .Values.elasticsearch.resources.requests.cpu }}

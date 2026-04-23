@@ -24,6 +24,10 @@ spec:
         env:
         - name: ELASTICSEARCH_HOSTS
           value: {{ .Values.kibana.env.elasticsearchHosts | quote }}
+        - name: ELASTICSEARCH_USERNAME
+          value: "elastic"
+        - name: ELASTICSEARCH_PASSWORD
+          value: "changeme"
         resources:
           requests:
             cpu: {{ .Values.kibana.resources.requests.cpu }}

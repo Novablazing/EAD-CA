@@ -31,6 +31,10 @@ spec:
           value: {{ .Values.fluentd.elasticsearch.port | quote }}
         - name: FLUENT_ELASTICSEARCH_SCHEME
           value: {{ .Values.fluentd.elasticsearch.scheme | quote }}
+        - name: FLUENT_ELASTICSEARCH_USER
+          value: "elastic"
+        - name: FLUENT_ELASTICSEARCH_PASSWORD
+          value: "changeme"
         - name: FLUENTD_SYSTEMD_CONF
           value: "disable"
         resources:
