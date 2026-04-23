@@ -74,6 +74,15 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
+      - name: Upload Trivy scan reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-vulnerability-reports
+          path: |
+            trivy-backend-report.txt
+            trivy-frontend-report.txt
+          retention-days: 30
+
   deploy-dev:
     name: Deploy → Dev
     needs: build-push
