@@ -83,6 +83,12 @@ jobs:
             trivy-frontend-report.txt
           retention-days: 30
 
+      - name: Install sKan
+        run: |
+          curl -sL https://github.com/alcideio/skan/releases/download/v0.9.0-skan/skan_v0.9.0_linux_amd64 -o /usr/local/bin/skan
+          chmod +x /usr/local/bin/skan
+          skan version
+
       - name: Scan Helm chart with sKan
         run: |
           helm template food-app ./helm/food-app -f ./helm/food-app/values.yaml | skan manifest -f -
