@@ -16,6 +16,7 @@ on:
         required: true
         type: choice
         options:
+          - install
           - backup
           - restore
       backup_name:
@@ -29,7 +30,6 @@ jobs:
     runs-on: self-hosted
     env:
       KUBECONFIG: /home/vyshnav/kubeconfigenv/kubeconfig-${{ inputs.environment }}
-      BACKUP_DIR: /home/vyshnav/valero/${{ inputs.environment }}
 
     steps:
       - name: Validate inputs
@@ -44,11 +44,51 @@ jobs:
           echo "Using kubeconfig: $KUBECONFIG"
           kubectl cluster-info --kubeconfig "$KUBECONFIG"
 
+      - name: Install Velero with Azure plugin
+        if: inputs.action == 'install'
+        run: |
+          BLOB_CONTAINER="velero-${{ inputs.environment }}"
+
+          # Create the blob container in the storage account if it doesn't exist
+          az storage container create \
+            --name "$BLOB_CONTAINER" \
+            --account-name velerodev \
+            --auth-mode login \
+            --public-access off
+
+          # Get Azure account details from local CLI config
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          TENANT_ID=$(az account show --query tenantId -o tsv)
+
+          # Create Velero credentials file from local Azure config
+          CREDENTIALS_FILE=$(mktemp)
+          cat <<EOF > "$CREDENTIALS_FILE"
+          AZURE_SUBSCRIPTION_ID=${SUBSCRIPTION_ID}
+          AZURE_TENANT_ID=${TENANT_ID}
+          AZURE_RESOURCE_GROUP=EADCA2
+          AZURE_CLOUD_NAME=AzurePublicCloud
+          EOF
+
+          # Install Velero with Azure Blob Storage plugin
+          velero install \
+            --provider azure \
+            --plugins velero/velero-plugin-for-microsoft-azure:v1.11.0 \
+            --bucket "$BLOB_CONTAINER" \
+            --secret-file "$CREDENTIALS_FILE" \
+            --backup-location-config "resourceGroup=EADCA2,storageAccount=velerodev,subscriptionId=${SUBSCRIPTION_ID}" \
+            --kubeconfig "$KUBECONFIG" \
+            --wait
+
+          rm -f "$CREDENTIALS_FILE"
+
+          echo "Velero installed successfully."
+          kubectl get deployment -n velero --kubeconfig "$KUBECONFIG"
+
       - name: Verify Velero is installed
+        if: inputs.action == 'backup' || inputs.action == 'restore'
         run: |
           if ! kubectl get crd backups.velero.io --kubeconfig "$KUBECONFIG" &>/dev/null; then
-            echo "::error::Velero CRDs not found. Install Velero on the cluster first:"
-            echo "::error::  velero install --provider <provider> --bucket <bucket> --secret-file <creds> --kubeconfig $KUBECONFIG"
+            echo "::error::Velero CRDs not found. Run this workflow with action=install first."
             exit 1
           fi
           echo "Velero CRDs found."
@@ -58,6 +98,9 @@ jobs:
             exit 1
           fi
           echo "Velero server is deployed."
+
+          # Verify backup storage location is available
+          velero backup-location get --kubeconfig "$KUBECONFIG"
 
       - name: Create backup
         if: inputs.action == 'backup'
@@ -97,8 +140,10 @@ jobs:
       - name: Summary
         run: |
           echo "========================================="
-          echo "Action:      ${{ inputs.action }}"
-          echo "Environment: ${{ inputs.environment }}"
-          echo "Backup Name: $BACKUP_NAME"
-          echo "Kubeconfig:  $KUBECONFIG"
+          echo "Action:         ${{ inputs.action }}"
+          echo "Environment:    ${{ inputs.environment }}"
+          echo "Storage Account: velerodev"
+          echo "Blob Container: velero-${{ inputs.environment }}"
+          echo "Backup Name:    ${BACKUP_NAME:-N/A}"
+          echo "Kubeconfig:     $KUBECONFIG"
           echo "========================================="
