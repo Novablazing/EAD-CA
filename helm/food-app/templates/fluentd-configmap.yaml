@@ -1,0 +1,126 @@
+{{- if .Values.fluentd.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.fluentd.name }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.fluentd.name }}
+data:
+  fluent.conf: |
+    # Collect container logs from the food namespace
+    <source>
+      @type tail
+      path /var/log/containers/*_{{ .Values.namespace }}_*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type regexp
+        expression /^(?<time>\S+) (?<stream>stdout|stderr) (?<logtag>[FP]) (?<log>.*)$/
+        time_key time
+        time_format %Y-%m-%dT%H:%M:%S.%N%z
+        keep_time_key true
+      </parse>
+    </source>
+
+    # Add Kubernetes metadata
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      @id filter_kube_metadata
+    </filter>
+
+    # Tag logs by application component
+    <match kubernetes.var.log.containers.**{{ .Values.frontend.name }}**.log>
+      @type elasticsearch
+      host {{ .Values.fluentd.elasticsearch.host }}
+      port {{ .Values.fluentd.elasticsearch.port }}
+      scheme {{ .Values.fluentd.elasticsearch.scheme }}
+      user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+      password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+      logstash_format true
+      logstash_prefix {{ .Values.fluentd.elasticsearch.logstashPrefix }}-frontend
+      include_tag_key true
+      <buffer>
+        @type file
+        path /var/log/fluentd-buffers/frontend.buffer
+        flush_mode interval
+        flush_interval 5s
+        retry_type exponential_backoff
+        retry_max_interval 30
+        chunk_limit_size 2M
+        queue_limit_length 8
+        overflow_action block
+      </buffer>
+    </match>
+
+    <match kubernetes.var.log.containers.**{{ .Values.backend.name }}**.log>
+      @type elasticsearch
+      host {{ .Values.fluentd.elasticsearch.host }}
+      port {{ .Values.fluentd.elasticsearch.port }}
+      scheme {{ .Values.fluentd.elasticsearch.scheme }}
+      user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+      password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+      logstash_format true
+      logstash_prefix {{ .Values.fluentd.elasticsearch.logstashPrefix }}-backend
+      include_tag_key true
+      <buffer>
+        @type file
+        path /var/log/fluentd-buffers/backend.buffer
+        flush_mode interval
+        flush_interval 5s
+        retry_type exponential_backoff
+        retry_max_interval 30
+        chunk_limit_size 2M
+        queue_limit_length 8
+        overflow_action block
+      </buffer>
+    </match>
+
+    <match kubernetes.var.log.containers.**{{ .Values.mongodb.name }}**.log>
+      @type elasticsearch
+      host {{ .Values.fluentd.elasticsearch.host }}
+      port {{ .Values.fluentd.elasticsearch.port }}
+      scheme {{ .Values.fluentd.elasticsearch.scheme }}
+      user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+      password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+      logstash_format true
+      logstash_prefix {{ .Values.fluentd.elasticsearch.logstashPrefix }}-mongodb
+      include_tag_key true
+      <buffer>
+        @type file
+        path /var/log/fluentd-buffers/mongodb.buffer
+        flush_mode interval
+        flush_interval 5s
+        retry_type exponential_backoff
+        retry_max_interval 30
+        chunk_limit_size 2M
+        queue_limit_length 8
+        overflow_action block
+      </buffer>
+    </match>
+
+    # Catch-all for remaining logs in the namespace
+    <match kubernetes.**>
+      @type elasticsearch
+      host {{ .Values.fluentd.elasticsearch.host }}
+      port {{ .Values.fluentd.elasticsearch.port }}
+      scheme {{ .Values.fluentd.elasticsearch.scheme }}
+      user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+      password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+      logstash_format true
+      logstash_prefix {{ .Values.fluentd.elasticsearch.logstashPrefix }}-other
+      include_tag_key true
+      <buffer>
+        @type file
+        path /var/log/fluentd-buffers/other.buffer
+        flush_mode interval
+        flush_interval 5s
+        retry_type exponential_backoff
+        retry_max_interval 30
+        chunk_limit_size 2M
+        queue_limit_length 8
+        overflow_action block
+      </buffer>
+    </match>
+{{- end }}

@@ -1,0 +1,16 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.elasticsearch.name }}-pvc
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}
+spec:
+  storageClassName: {{ .Values.elasticsearch.storage.storageClassName }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.elasticsearch.storage.size }}
+{{- end }}

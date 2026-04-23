@@ -1,0 +1,52 @@
+{{- if .Values.kibana.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.kibana.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.kibana.name }}
+spec:
+  replicas: {{ .Values.kibana.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.kibana.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.kibana.name }}
+    spec:
+      containers:
+      - name: {{ .Values.kibana.name }}
+        image: {{ .Values.kibana.image }}:{{ .Values.kibana.tag }}
+        ports:
+        - containerPort: {{ .Values.kibana.port }}
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: {{ .Values.kibana.env.elasticsearchHosts | quote }}
+        - name: ELASTICSEARCH_USERNAME
+          value: "elastic"
+        - name: ELASTICSEARCH_PASSWORD
+          value: "changeme"
+        resources:
+          requests:
+            cpu: {{ .Values.kibana.resources.requests.cpu }}
+            memory: {{ .Values.kibana.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.kibana.resources.limits.cpu }}
+            memory: {{ .Values.kibana.resources.limits.memory }}
+        readinessProbe:
+          httpGet:
+            path: /api/status
+            port: {{ .Values.kibana.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /api/status
+            port: {{ .Values.kibana.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+{{- end }}
