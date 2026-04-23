@@ -12,6 +12,9 @@ spec:
   - port: {{ .Values.kibana.service.port }}
     targetPort: {{ .Values.kibana.port }}
     protocol: TCP
+    {{- if .Values.kibana.service.nodePort }}
+    nodePort: {{ .Values.kibana.service.nodePort }}
+    {{- end }}
   selector:
     app: {{ .Values.kibana.name }}
 {{- end }}

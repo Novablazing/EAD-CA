@@ -121,8 +121,9 @@ kibana:
       cpu: "500m"
       memory: "512Mi"
   service:
-    type: ClusterIP
+    type: NodePort
     port: 5601
+    nodePort: 30561
 
 fluentd:
   enabled: true
