@@ -83,6 +83,19 @@ jobs:
             trivy-frontend-report.txt
           retention-days: 30
 
+      - name: Scan Helm chart with sKan
+        run: |
+          helm template food-app ./helm/food-app -f ./helm/food-app/values.yaml | skan manifest -f -
+          echo "sKan security scan completed"
+
+      - name: Upload sKan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skan-security-report
+          path: skan-result.html
+          retention-days: 30
+
   deploy-dev:
     name: Deploy → Dev
     needs: build-push
