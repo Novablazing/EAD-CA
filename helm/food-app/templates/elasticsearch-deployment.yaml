@@ -1,0 +1,73 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.elasticsearch.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}
+spec:
+  replicas: {{ .Values.elasticsearch.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.elasticsearch.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.elasticsearch.name }}
+    spec:
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+        volumeMounts:
+        - name: es-data
+          mountPath: /usr/share/elasticsearch/data
+      containers:
+      - name: {{ .Values.elasticsearch.name }}
+        image: {{ .Values.elasticsearch.image }}:{{ .Values.elasticsearch.tag }}
+        ports:
+        - containerPort: {{ .Values.elasticsearch.port }}
+          name: http
+        - containerPort: {{ .Values.elasticsearch.transportPort }}
+          name: transport
+        env:
+        - name: discovery.type
+          value: {{ .Values.elasticsearch.env.discoveryType }}
+        - name: ES_JAVA_OPTS
+          value: {{ .Values.elasticsearch.env.esJavaOpts | quote }}
+        - name: xpack.security.enabled
+          value: "true"
+        - name: xpack.security.authc.api_key.enabled
+          value: "true"
+        - name: ELASTIC_PASSWORD
+          value: "changeme"
+        resources:
+          requests:
+            cpu: {{ .Values.elasticsearch.resources.requests.cpu }}
+            memory: {{ .Values.elasticsearch.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.elasticsearch.resources.limits.cpu }}
+            memory: {{ .Values.elasticsearch.resources.limits.memory }}
+        volumeMounts:
+        - name: es-data
+          mountPath: /usr/share/elasticsearch/data
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: {{ .Values.elasticsearch.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: {{ .Values.elasticsearch.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: es-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.elasticsearch.name }}-pvc
+{{- end }}

@@ -77,6 +77,72 @@ ingress:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 
+elasticsearch:
+  enabled: true
+  name: elasticsearch
+  image: docker.elastic.co/elasticsearch/elasticsearch
+  tag: "7.17.16"
+  replicas: 1
+  port: 9200
+  transportPort: 9300
+  env:
+    discoveryType: single-node
+    esJavaOpts: "-Xms512m -Xmx512m"
+    xpackSecurityEnabled: "false"
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  storage:
+    size: 5Gi
+    storageClassName: manual
+    hostPath: /mnt/data/elasticsearch
+  service:
+    type: ClusterIP
+    port: 9200
+
+kibana:
+  enabled: true
+  name: kibana
+  image: docker.elastic.co/kibana/kibana
+  tag: "7.17.16"
+  replicas: 1
+  port: 5601
+  env:
+    elasticsearchHosts: "http://elasticsearch:9200"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  service:
+    type: NodePort
+    port: 5601
+    nodePort: 30561
+
+fluentd:
+  enabled: true
+  name: fluentd
+  image: fluent/fluentd-kubernetes-daemonset
+  tag: "v1.16-debian-elasticsearch7-1"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "200Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  elasticsearch:
+    host: elasticsearch
+    port: 9200
+    scheme: http
+    logstashPrefix: food-app
+
 mongodb:
   name: mongodb
   image: mongo

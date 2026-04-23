@@ -56,6 +56,18 @@ resource "azurerm_network_security_group" "this" {
     source_address_prefixes    = var.allowed_ssh_cidr
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "allow-nodeport-30561"
+    priority                   = 130
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "30561"
+    source_address_prefixes    = var.allowed_ssh_cidr
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_network_interface_security_group_association" "this" {
