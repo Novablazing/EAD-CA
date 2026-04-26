@@ -53,7 +53,6 @@ jobs:
           az storage container create \
             --name "$BLOB_CONTAINER" \
             --account-name eadca \
-            --account-key 
             --auth-mode login \
             --public-access off
 
@@ -68,6 +67,7 @@ jobs:
           AZURE_TENANT_ID=${TENANT_ID}
           AZURE_RESOURCE_GROUP=EADCA2
           AZURE_CLOUD_NAME=AzurePublicCloud
+          AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${{ secrets.AZURE_STORAGE_ACCESS_KEY }}
           EOF
 
           # Install Velero with Azure Blob Storage plugin
@@ -76,7 +76,7 @@ jobs:
             --plugins velero/velero-plugin-for-microsoft-azure:v1.11.0 \
             --bucket "$BLOB_CONTAINER" \
             --secret-file "$CREDENTIALS_FILE" \
-            --backup-location-config "resourceGroup=EADCA2,storageAccount=eadca,subscriptionId=${SUBSCRIPTION_ID}" \
+            --backup-location-config "resourceGroup=EADCA2,storageAccount=eadca,storageAccountKeyEnvVar=AZURE_STORAGE_ACCOUNT_ACCESS_KEY,subscriptionId=${SUBSCRIPTION_ID}" \
             --kubeconfig "$KUBECONFIG" \
             --wait
 
