@@ -67,6 +67,7 @@ jobs:
           AZURE_TENANT_ID=${TENANT_ID}
           AZURE_RESOURCE_GROUP=EADCA2
           AZURE_CLOUD_NAME=AzurePublicCloud
+          AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${{ secrets.AZURE_STORAGE_ACCESS_KEY }}
           EOF
 
           # Install Velero with Azure Blob Storage plugin
