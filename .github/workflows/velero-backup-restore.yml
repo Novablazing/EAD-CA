@@ -76,7 +76,7 @@ jobs:
             --plugins velero/velero-plugin-for-microsoft-azure:v1.11.0 \
             --bucket "$BLOB_CONTAINER" \
             --secret-file "$CREDENTIALS_FILE" \
-            --backup-location-config "resourceGroup=EADCA2,storageAccount=eadca,subscriptionId=${SUBSCRIPTION_ID}" \
+            --backup-location-config "resourceGroup=EADCA2,storageAccount=eadca,storageAccountKeyEnvVar=AZURE_STORAGE_ACCOUNT_ACCESS_KEY,subscriptionId=${SUBSCRIPTION_ID}" \
             --kubeconfig "$KUBECONFIG" \
             --wait
 
