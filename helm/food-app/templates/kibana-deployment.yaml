@@ -46,7 +46,7 @@ spec:
           httpGet:
             path: /api/status
             port: {{ .Values.kibana.port }}
-          initialDelaySeconds: 60
+          initialDelaySeconds: 120
           periodSeconds: 10
           timeoutSeconds: 5
 {{- end }}
