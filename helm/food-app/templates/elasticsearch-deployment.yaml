@@ -53,17 +53,21 @@ spec:
         - name: es-data
           mountPath: /usr/share/elasticsearch/data
         readinessProbe:
-          httpGet:
-            path: /_cluster/health
-            port: {{ .Values.elasticsearch.port }}
+          exec:
+            command:
+            - sh
+            - -c
+            - "curl -s -u elastic:changeme http://localhost:{{ .Values.elasticsearch.port }}/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
         livenessProbe:
-          httpGet:
-            path: /_cluster/health
-            port: {{ .Values.elasticsearch.port }}
-          initialDelaySeconds: 60
+          exec:
+            command:
+            - sh
+            - -c
+            - "curl -s -u elastic:changeme http://localhost:{{ .Values.elasticsearch.port }}/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"
+          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
       volumes:

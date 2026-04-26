@@ -36,17 +36,21 @@ spec:
             cpu: {{ .Values.kibana.resources.limits.cpu }}
             memory: {{ .Values.kibana.resources.limits.memory }}
         readinessProbe:
-          httpGet:
-            path: /api/status
-            port: {{ .Values.kibana.port }}
+          exec:
+            command:
+            - sh
+            - -c
+            - "curl -s -u elastic:changeme http://localhost:{{ .Values.kibana.port }}/api/status | grep -q '\"overall\"'"
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
         livenessProbe:
-          httpGet:
-            path: /api/status
-            port: {{ .Values.kibana.port }}
-          initialDelaySeconds: 60
+          exec:
+            command:
+            - sh
+            - -c
+            - "curl -s -u elastic:changeme http://localhost:{{ .Values.kibana.port }}/api/status | grep -q '\"overall\"'"
+          initialDelaySeconds: 120
           periodSeconds: 10
           timeoutSeconds: 5
 {{- end }}
