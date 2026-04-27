@@ -1,7 +1,7 @@
 {
 	"development": {
         "config_id": "development",
-        "app_name": "Recipe Tracker",
+        "app_name": "Recipe tracker",
 		"webservice_host": "recipe-backend",
 		"webservice_port": "8080", 
 		"exposedPort": "22137"
