@@ -74,6 +74,8 @@ jobs:
           velero install \
             --provider azure \
             --plugins velero/velero-plugin-for-microsoft-azure:v1.11.0 \
+            --client-qps 100 \
+            --client-burst 100 \
             --bucket "$BLOB_CONTAINER" \
             --secret-file "$CREDENTIALS_FILE" \
             --backup-location-config "resourceGroup=EADCA2,storageAccount=eadca,storageAccountKeyEnvVar=AZURE_STORAGE_ACCOUNT_ACCESS_KEY,subscriptionId=${SUBSCRIPTION_ID}" \
